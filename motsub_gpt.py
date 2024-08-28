@@ -1,4 +1,3 @@
-import os
 import anthropic
 import logging
 from typing import Tuple, Optional
@@ -7,6 +6,9 @@ from typing import Tuple, Optional
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Hardcoded API key (not recommended for production use)
+ANTHROPIC_API_KEY = "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"
 
 
 def compare_and_translate_subtitles(stt_srt_path: str, ocr_srt_path: str) -> Tuple[Optional[str], Optional[str]]:
@@ -24,11 +26,7 @@ def compare_and_translate_subtitles(stt_srt_path: str, ocr_srt_path: str) -> Tup
 
         # Initialize the Anthropic client
         logger.info("Initializing Anthropic client")
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise ValueError(
-                "ANTHROPIC_API_KEY environment variable is not set")
-        client = anthropic.Anthropic(api_key=api_key)
+        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
         # Prepare the prompt for Claude
         logger.info("Preparing prompt for Claude")
