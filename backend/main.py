@@ -5,18 +5,6 @@
 @FileName: main.py
 @desc: 主程序入口文件
 """
-import pysrt
-import time
-import multiprocessing
-import platform
-import threading
-from tools import subtitle_ocr
-from tools.ocr import OcrRecogniser, get_coordinates
-from tools.infer.predict_det import TextDetector
-from tools.infer import utility
-from tools import reformat
-import config
-import importlib
 import os
 import random
 import shutil
@@ -32,6 +20,18 @@ from tqdm import tqdm
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
+import importlib
+import config
+from tools import reformat
+from tools.infer import utility
+from tools.infer.predict_det import TextDetector
+from tools.ocr import OcrRecogniser, get_coordinates
+from tools import subtitle_ocr
+import threading
+import platform
+import multiprocessing
+import time
+import pysrt
 
 
 class SubtitleDetect:
@@ -71,8 +71,7 @@ class SubtitleExtractor:
         # 通过视频路径获取视频名称
         self.vd_name = Path(self.video_path).stem
         # 临时存储文件夹
-        self.temp_output_dir = os.path.join(os.path.dirname(
-            config.BASE_DIR), 'output', str(self.vd_name))
+        self.temp_output_dir = os.path.join(os.path.dirname(config.BASE_DIR), 'output', str(self.vd_name))
         # 视频帧总数
         self.frame_count = self.video_cap.get(cv2.CAP_PROP_FRAME_COUNT)
         # 视频帧率
@@ -85,8 +84,7 @@ class SubtitleExtractor:
         # 提取的视频帧储存目录
         self.frame_output_dir = os.path.join(self.temp_output_dir, 'frames')
         # 提取的字幕文件存储目录
-        self.subtitle_output_dir = os.path.join(
-            self.temp_output_dir, 'subtitle')
+        self.subtitle_output_dir = os.path.join(self.temp_output_dir, 'subtitle')
         # 若目录不存在，则创建文件夹
         if not os.path.exists(self.frame_output_dir):
             os.makedirs(self.frame_output_dir)
@@ -95,18 +93,14 @@ class SubtitleExtractor:
         # 定义是否使用vsf提取字幕帧
         self.use_vsf = False
         # 定义vsf的字幕输出路径
-        self.vsf_subtitle = os.path.join(
-            self.subtitle_output_dir, 'raw_vsf.srt')
+        self.vsf_subtitle = os.path.join(self.subtitle_output_dir, 'raw_vsf.srt')
         # 提取的原始字幕文本存储路径
-        self.raw_subtitle_path = os.path.join(
-            self.subtitle_output_dir, 'raw.txt')
+        self.raw_subtitle_path = os.path.join(self.subtitle_output_dir, 'raw.txt')
         # 自定义ocr对象
         self.ocr = None
         # 打印识别语言与识别模式
-        print(f"{config.interface_config['Main']['RecSubLang']}：{
-              config.REC_CHAR_TYPE}")
-        print(f"{config.interface_config['Main']
-              ['RecMode']}：{config.MODE_TYPE}")
+        print(f"{config.interface_config['Main']['RecSubLang']}：{config.REC_CHAR_TYPE}")
+        print(f"{config.interface_config['Main']['RecMode']}：{config.MODE_TYPE}")
         # 如果使用GPU加速，则打印GPU加速提示
         if config.USE_GPU:
             print(config.interface_config['Main']['GPUSpeedUp'])
@@ -138,10 +132,8 @@ class SubtitleExtractor:
         print(f"{config.interface_config['Main']['FrameCount']}：{self.frame_count}"
               f"，{config.interface_config['Main']['FrameRate']}：{self.fps}")
         # 打印加载模型信息
-        print(f'{os.path.basename(os.path.dirname(config.DET_MODEL_PATH))
-                 }-{os.path.basename(config.DET_MODEL_PATH)}')
-        print(f'{os.path.basename(os.path.dirname(config.REC_MODEL_PATH))
-                 }-{os.path.basename(config.REC_MODEL_PATH)}')
+        print(f'{os.path.basename(os.path.dirname(config.DET_MODEL_PATH))}-{os.path.basename(config.DET_MODEL_PATH)}')
+        print(f'{os.path.basename(os.path.dirname(config.REC_MODEL_PATH))}-{os.path.basename(config.REC_MODEL_PATH)}')
         # 打印视频帧提取开始提示
         print(config.interface_config['Main']['StartProcessFrame'])
         # 创建一个字幕OCR识别进程
@@ -160,8 +152,7 @@ class SubtitleExtractor:
 
         # 往字幕OCR任务队列中，添加OCR识别任务结束标志
         # 任务格式为：(total_frame_count总帧数, current_frame_no当前帧, dt_box检测框, rec_res识别结果, 当前帧时间， subtitle_area字幕区域)
-        self.subtitle_ocr_task_queue.put(
-            (self.frame_count, -1, None, None, None, None))
+        self.subtitle_ocr_task_queue.put((self.frame_count, -1, None, None, None, None))
         # 等待子线程完成
         subtitle_ocr_process.join()
         # 打印完成提示
@@ -171,8 +162,7 @@ class SubtitleExtractor:
         if self.sub_area is None:
             print(config.interface_config['Main']['StartDetectWaterMark'])
             # 询问用户视频是否有水印区域
-            user_input = input(
-                config.interface_config['Main']['checkWaterMark']).strip()
+            user_input = input(config.interface_config['Main']['checkWaterMark']).strip()
             if user_input == 'y':
                 self.filter_watermark()
                 print(config.interface_config['Main']['FinishDetectWaterMark'])
@@ -194,18 +184,15 @@ class SubtitleExtractor:
             # 如果未使用vsf提取字幕，则使用常规字幕生成方法
             self.generate_subtitle_file()
         if config.WORD_SEGMENTATION:
-            reformat.execute(os.path.join(os.path.splitext(
-                self.video_path)[0] + '.srt'), config.REC_CHAR_TYPE)
-        print(config.interface_config['Main']['FinishGenerateSub'], f"{
-              round(time.time() - start_time, 2)}s")
+            reformat.execute(os.path.join(os.path.splitext(self.video_path)[0] + '.srt'), config.REC_CHAR_TYPE)
+        print(config.interface_config['Main']['FinishGenerateSub'], f"{round(time.time() - start_time, 2)}s")
         self.update_progress(ocr=100, frame_extract=100)
         self.isFinished = True
         # 删除缓存文件
         self.empty_cache()
         self.lock.release()
         if config.GENERATE_TXT:
-            self.srt2txt(os.path.join(
-                os.path.splitext(self.video_path)[0] + '.srt'))
+            self.srt2txt(os.path.join(os.path.splitext(self.video_path)[0] + '.srt'))
 
     def extract_frame_by_fps(self):
         """
@@ -224,8 +211,7 @@ class SubtitleExtractor:
             else:
                 current_frame_no += 1
                 # subtitle_ocr_task_queue: (total_frame_count总帧数, current_frame_no当前帧, dt_box检测框, rec_res识别结果, 当前帧时间，subtitle_area字幕区域)
-                task = (self.frame_count, current_frame_no, None,
-                        None, None, self.default_subtitle_area)
+                task = (self.frame_count, current_frame_no, None, None, None, self.default_subtitle_area)
                 self.subtitle_ocr_task_queue.put(task)
                 # 跳过剩下的帧
                 for i in range(int(self.fps // config.EXTRACT_FREQUENCY) - 1):
@@ -233,8 +219,7 @@ class SubtitleExtractor:
                     if ret:
                         current_frame_no += 1
                         # 更新进度条
-                        self.update_progress(frame_extract=(
-                            current_frame_no / self.frame_count) * 100)
+                        self.update_progress(frame_extract=(current_frame_no / self.frame_count) * 100)
 
         self.video_cap.release()
 
@@ -251,8 +236,7 @@ class SubtitleExtractor:
         frame_lru_list_max_size = 2
         ocr_args_list = []
         compare_ocr_result_cache = {}
-        tbar = tqdm(total=int(self.frame_count), unit='f',
-                    position=0, file=sys.__stdout__)
+        tbar = tqdm(total=int(self.frame_count), unit='f', position=0, file=sys.__stdout__)
         first_flag = True
         is_finding_start_frame_no = False
         is_finding_end_frame_no = False
@@ -294,14 +278,11 @@ class SubtitleExtractor:
                 if is_finding_start_frame_no:
                     start_frame_no = current_frame_no
                     dt_box, rec_res = self.ocr.predict(frame)
-                    area_text1 = "".join(
-                        self.__get_area_text((dt_box, rec_res)))
+                    area_text1 = "".join(self.__get_area_text((dt_box, rec_res)))
                     if start_frame_no not in compare_ocr_result_cache.keys():
-                        compare_ocr_result_cache[current_frame_no] = {
-                            'text': area_text1, 'dt_box': dt_box, 'rec_res': rec_res}
+                        compare_ocr_result_cache[current_frame_no] = {'text': area_text1, 'dt_box': dt_box, 'rec_res': rec_res}
                         frame_lru_list.append((frame, current_frame_no))
-                        ocr_args_list.append(
-                            (self.frame_count, current_frame_no))
+                        ocr_args_list.append((self.frame_count, current_frame_no))
                         # 缓存头帧
                         start_frame = frame
                     # 开始找尾
@@ -324,8 +305,7 @@ class SubtitleExtractor:
                         end_frame_no = current_frame_no - 1
                         frame_lru_list.append((start_frame, end_frame_no))
                         ocr_args_list.append((self.frame_count, end_frame_no))
-                        start_end_frame_no.append(
-                            (start_frame_no, end_frame_no))
+                        start_end_frame_no.append((start_frame_no, end_frame_no))
 
             else:
                 # 如果检测到字幕头后有没有字幕，则找到结尾，尾巴为前一帧
@@ -351,12 +331,10 @@ class SubtitleExtractor:
                 else:
                     dt_box, rec_res = None, None
                 # subtitle_ocr_task_queue: (total_frame_count总帧数, current_frame_no当前帧, dt_box检测框, rec_res识别结果, 当前帧时间， subtitle_area字幕区域)
-                task = (total_frame_count, ocr_info_frame_no, dt_box,
-                        rec_res, None, self.default_subtitle_area)
+                task = (total_frame_count, ocr_info_frame_no, dt_box, rec_res, None, self.default_subtitle_area)
                 # 添加任务
                 self.subtitle_ocr_task_queue.put(task)
-                self.update_progress(frame_extract=(
-                    current_frame_no / self.frame_count) * 100)
+                self.update_progress(frame_extract=(current_frame_no / self.frame_count) * 100)
 
         while len(ocr_args_list) > 0:
             total_frame_count, ocr_info_frame_no = ocr_args_list.pop(0)
@@ -365,8 +343,7 @@ class SubtitleExtractor:
                 dt_box, rec_res = predict_result['dt_box'], predict_result['rec_res']
             else:
                 dt_box, rec_res = None, None
-            task = (total_frame_count, ocr_info_frame_no, dt_box,
-                    rec_res, None, self.default_subtitle_area)
+            task = (total_frame_count, ocr_info_frame_no, dt_box, rec_res, None, self.default_subtitle_area)
             # 添加任务
             self.subtitle_ocr_task_queue.put(task)
         self.video_cap.release()
@@ -397,20 +374,17 @@ class SubtitleExtractor:
                         processed_image.add(rgb_image)
                         # 根据vsf生成的文件名读取时间
                         h, m, s, ms = rgb_image.split('__')[0].split('_')
-                        total_ms = int(ms) + int(s) * 1000 + int(m) * \
-                            60 * 1000 + int(h) * 60 * 60 * 1000
+                        total_ms = int(ms) + int(s) * 1000 + int(m) * 60 * 1000 + int(h) * 60 * 60 * 1000
                         if total_ms > last_total_ms:
                             frame_no = int(total_ms / self.fps)
-                            task = (self.frame_count, frame_no, None,
-                                    None, total_ms, self.default_subtitle_area)
+                            task = (self.frame_count, frame_no, None, None, total_ms, self.default_subtitle_area)
                             self.subtitle_ocr_task_queue.put(task)
                         last_total_ms = total_ms
                         if total_ms / duration_ms >= 1:
                             self.update_progress(frame_extract=100)
                             return
                         else:
-                            self.update_progress(frame_extract=(
-                                total_ms / duration_ms) * 100)
+                            self.update_progress(frame_extract=(total_ms / duration_ms) * 100)
                 # 文件被清理了
                 except FileNotFoundError:
                     return
@@ -425,20 +399,17 @@ class SubtitleExtractor:
                     line = line.replace("\n", "")
                     line = line.replace("Frame: ", "")
                     h, m, s, ms = line.split('__')[0].split('_')
-                    total_ms = int(ms) + int(s) * 1000 + int(m) * \
-                        60 * 1000 + int(h) * 60 * 60 * 1000
+                    total_ms = int(ms) + int(s) * 1000 + int(m) * 60 * 1000 + int(h) * 60 * 60 * 1000
                     if total_ms > last_total_ms:
                         frame_no = int(total_ms / self.fps)
-                        task = (self.frame_count, frame_no, None, None,
-                                total_ms, self.default_subtitle_area)
+                        task = (self.frame_count, frame_no, None, None, total_ms, self.default_subtitle_area)
                         self.subtitle_ocr_task_queue.put(task)
                     last_total_ms = total_ms
                     if total_ms / duration_ms >= 1:
                         self.update_progress(frame_extract=100)
                         return
                     else:
-                        self.update_progress(frame_extract=(
-                            total_ms / duration_ms) * 100)
+                        self.update_progress(frame_extract=(total_ms / duration_ms) * 100)
                 else:
                     print(line.strip())
             out.close()
@@ -447,11 +418,9 @@ class SubtitleExtractor:
         self.__delete_frame_cache()
         # 定义videoSubFinder所在路径
         if platform.system() == 'Windows':
-            path_vsf = os.path.join(
-                config.BASE_DIR, 'subfinder', 'windows', 'VideoSubFinderWXW.exe')
+            path_vsf = os.path.join(config.BASE_DIR, 'subfinder', 'windows', 'VideoSubFinderWXW.exe')
         else:
-            path_vsf = os.path.join(
-                config.BASE_DIR, 'subfinder', 'linux', 'VideoSubFinderCli.run')
+            path_vsf = os.path.join(config.BASE_DIR, 'subfinder', 'linux', 'VideoSubFinderCli.run')
             os.chmod(path_vsf, 0o775)
         # ：图像上半部分所占百分比，取值【0-1】
         top_end = 1 - self.sub_area[0] / self.frame_height
@@ -466,25 +435,20 @@ class SubtitleExtractor:
             cpu_count = max(multiprocessing.cpu_count() - 1, 1)
         if platform.system() == 'Windows':
             # 定义执行命令
-            cmd = f"{path_vsf} --use_cuda -c -r -i \"{self.video_path}\" -o \"{
-                self.temp_output_dir}\" -ces \"{self.vsf_subtitle}\" "
-            cmd += f"-te {top_end} -be {bottom_end} -le {left_end} -re {
-                right_end} -nthr {cpu_count} -nocrthr {cpu_count}"
+            cmd = f"{path_vsf} --use_cuda -c -r -i \"{self.video_path}\" -o \"{self.temp_output_dir}\" -ces \"{self.vsf_subtitle}\" "
+            cmd += f"-te {top_end} -be {bottom_end} -le {left_end} -re {right_end} -nthr {cpu_count} -nocrthr {cpu_count}"
             self.vsf_running = True
             # 计算进度
             Thread(target=count_process, daemon=True).start()
             import subprocess
-            subprocess.run(cmd, shell=True, stdin=subprocess.PIPE,
-                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.vsf_running = False
         else:
             # 定义执行命令
-            cmd = f"{path_vsf} -c -r -i \"{self.video_path}\" -o \"{
-                self.temp_output_dir}\" -ces \"{self.vsf_subtitle}\" "
+            cmd = f"{path_vsf} -c -r -i \"{self.video_path}\" -o \"{self.temp_output_dir}\" -ces \"{self.vsf_subtitle}\" "
             if config.USE_GPU:
                 cmd += "--use_cuda "
-            cmd += f"-te {top_end} -be {bottom_end} -le {
-                left_end} -re {right_end} -nthr {cpu_count} -dsi"
+            cmd += f"-te {top_end} -be {bottom_end} -le {left_end} -re {right_end} -nthr {cpu_count} -dsi"
             self.vsf_running = True
             import subprocess
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1,
@@ -504,8 +468,7 @@ class SubtitleExtractor:
         cap = cv2.VideoCapture(self.video_path)
         ret, sample_frame = False, None
         for i in range(10):
-            frame_no = random.randint(
-                int(self.frame_count * 0.1), int(self.frame_count * 0.9))
+            frame_no = random.randint(int(self.frame_count * 0.1), int(self.frame_count * 0.9))
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_no)
             ret, sample_frame = cap.read()
             if ret:
@@ -526,19 +489,16 @@ class SubtitleExtractor:
             xmax = max(watermark_area[0][1], watermark_area[0][0])
             cover = sample_frame[ymin:ymax, xmin:xmax]
             cover = cv2.blur(cover, (10, 10))
-            cv2.rectangle(cover, pt1=(0, cover.shape[0]), pt2=(
-                cover.shape[1], 0), color=(0, 0, 255), thickness=3)
+            cv2.rectangle(cover, pt1=(0, cover.shape[0]), pt2=(cover.shape[1], 0), color=(0, 0, 255), thickness=3)
             sample_frame[ymin:ymax, xmin:xmax] = cover
             position = ((xmin + xmax) // 2, ymax)
 
             cv2.putText(sample_frame, text=area_num.pop(), org=position, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         fontScale=1, color=(255, 0, 0), thickness=2, lineType=cv2.LINE_AA)
 
-        sample_frame_file_path = os.path.join(os.path.dirname(
-            self.frame_output_dir), 'watermark_area.jpg')
+        sample_frame_file_path = os.path.join(os.path.dirname(self.frame_output_dir), 'watermark_area.jpg')
         cv2.imwrite(sample_frame_file_path, sample_frame)
-        print(f"{config.interface_config['Main']['WatchPicture']}: {
-              sample_frame_file_path}")
+        print(f"{config.interface_config['Main']['WatchPicture']}: {sample_frame_file_path}")
 
         area_num = ['E', 'D', 'C', 'B', 'A']
         for watermark_area in watermark_areas:
@@ -569,8 +529,7 @@ class SubtitleExtractor:
         cap = cv2.VideoCapture(self.video_path)
         ret, sample_frame = False, None
         for i in range(10):
-            frame_no = random.randint(
-                int(self.frame_count * 0.1), int(self.frame_count * 0.9))
+            frame_no = random.randint(int(self.frame_count * 0.1), int(self.frame_count * 0.9))
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_no)
             ret, sample_frame = cap.read()
             if ret:
@@ -585,25 +544,19 @@ class SubtitleExtractor:
         ymin = abs(subtitle_area[0] - config.SUBTITLE_AREA_DEVIATION_PIXEL)
         ymax = subtitle_area[1] + config.SUBTITLE_AREA_DEVIATION_PIXEL
         # 画出字幕框的区域
-        cv2.rectangle(sample_frame, pt1=(0, ymin), pt2=(
-            sample_frame.shape[1], ymax), color=(0, 0, 255), thickness=3)
-        sample_frame_file_path = os.path.join(
-            os.path.dirname(self.frame_output_dir), 'subtitle_area.jpg')
+        cv2.rectangle(sample_frame, pt1=(0, ymin), pt2=(sample_frame.shape[1], ymax), color=(0, 0, 255), thickness=3)
+        sample_frame_file_path = os.path.join(os.path.dirname(self.frame_output_dir), 'subtitle_area.jpg')
         cv2.imwrite(sample_frame_file_path, sample_frame)
-        print(f"{config.interface_config['Main']['CheckSubArea']} {
-              sample_frame_file_path}")
+        print(f"{config.interface_config['Main']['CheckSubArea']} {sample_frame_file_path}")
 
-        user_input = input(f"{(ymin, ymax)} {
-                           config.interface_config['Main']['DeleteNoSubArea']}").strip()
+        user_input = input(f"{(ymin, ymax)} {config.interface_config['Main']['DeleteNoSubArea']}").strip()
         if user_input == 'y' or user_input == '\n':
             with open(self.raw_subtitle_path, mode='r+', encoding='utf-8') as f:
                 content = f.readlines()
                 f.seek(0)
                 for i in content:
-                    i_ymin = int(i.split('\t')[1].split(
-                        '(')[1].split(')')[0].split(', ')[2])
-                    i_ymax = int(i.split('\t')[1].split(
-                        '(')[1].split(')')[0].split(', ')[3])
+                    i_ymin = int(i.split('\t')[1].split('(')[1].split(')')[0].split(', ')[2])
+                    i_ymax = int(i.split('\t')[1].split('(')[1].split(')')[0].split(', ')[3])
                     if ymin <= i_ymin and i_ymax <= ymax:
                         f.write(i)
                 f.truncate()
@@ -618,8 +571,7 @@ class SubtitleExtractor:
         """
         if not self.use_vsf:
             subtitle_content = self._remove_duplicate_subtitle()
-            srt_filename = os.path.join(
-                os.path.splitext(self.video_path)[0] + '.srt')
+            srt_filename = os.path.join(os.path.splitext(self.video_path)[0] + '.srt')
             # 保存持续时间不足1秒的字幕行，用于后续处理
             post_process_subtitle = []
             with open(srt_filename, mode='w', encoding='utf-8') as f:
@@ -628,17 +580,14 @@ class SubtitleExtractor:
                     frame_start = self._frame_to_timecode(int(content[0]))
                     # 比较起始帧号与结束帧号， 如果字幕持续时间不足1秒，则将显示时间设为1s
                     if abs(int(content[1]) - int(content[0])) < self.fps:
-                        frame_end = self._frame_to_timecode(
-                            int(int(content[0]) + self.fps))
+                        frame_end = self._frame_to_timecode(int(int(content[0]) + self.fps))
                         post_process_subtitle.append(line_code)
                     else:
                         frame_end = self._frame_to_timecode(int(content[1]))
                     frame_content = content[2]
-                    subtitle_line = f'{line_code}\n{
-                        frame_start} --> {frame_end}\n{frame_content}\n'
+                    subtitle_line = f'{line_code}\n{frame_start} --> {frame_end}\n{frame_content}\n'
                     f.write(subtitle_line)
-            print(f"[NO-VSF]{config.interface_config['Main']
-                  ['SubLocation']} {srt_filename}")
+            print(f"[NO-VSF]{config.interface_config['Main']['SubLocation']} {srt_filename}")
             # 返回持续时间低于1s的字幕行
             return post_process_subtitle
 
@@ -671,11 +620,9 @@ class SubtitleExtractor:
                 final_subtitles.append(sub)
                 continue
 
-        srt_filename = os.path.join(
-            os.path.splitext(self.video_path)[0] + '.srt')
+        srt_filename = os.path.join(os.path.splitext(self.video_path)[0] + '.srt')
         pysrt.SubRipFile(final_subtitles).save(srt_filename, encoding='utf-8')
-        print(f"[VSF]{config.interface_config['Main']
-              ['SubLocation']} {srt_filename}")
+        print(f"[VSF]{config.interface_config['Main']['SubLocation']} {srt_filename}")
 
     def _detect_watermark_area(self):
         """
@@ -684,8 +631,7 @@ class SubtitleExtractor:
         根据坐标点信息，进行统计，将一直具有固定坐标的文本区域选出
         :return 返回最有可能的水印区域
         """
-        f = open(self.raw_subtitle_path, mode='r',
-                 encoding='utf-8')  # 打开txt文件，以‘utf-8’编码读取
+        f = open(self.raw_subtitle_path, mode='r', encoding='utf-8')  # 打开txt文件，以‘utf-8’编码读取
         line = f.readline()  # 以行的形式进行读取文件
         # 坐标点列表
         coordinates_list = []
@@ -695,8 +641,7 @@ class SubtitleExtractor:
         content_list = []
         while line:
             frame_no = line.split('\t')[0]
-            text_position = line.split('\t')[1].split(
-                '(')[1].split(')')[0].split(', ')
+            text_position = line.split('\t')[1].split('(')[1].split(')')[0].split(', ')
             content = line.split('\t')[2]
             frame_no_list.append(frame_no)
             coordinates_list.append((int(text_position[0]),
@@ -728,16 +673,13 @@ class SubtitleExtractor:
         :return 返回字幕的区域位置
         """
         # 打开去水印区域处理过的raw txt
-        f = open(self.raw_subtitle_path, mode='r',
-                 encoding='utf-8')  # 打开txt文件，以‘utf-8’编码读取
+        f = open(self.raw_subtitle_path, mode='r', encoding='utf-8')  # 打开txt文件，以‘utf-8’编码读取
         line = f.readline()  # 以行的形式进行读取文件
         # y坐标点列表
         y_coordinates_list = []
         while line:
-            text_position = line.split('\t')[1].split(
-                '(')[1].split(')')[0].split(', ')
-            y_coordinates_list.append(
-                (int(text_position[2]), int(text_position[3])))
+            text_position = line.split('\t')[1].split('(')[1].split(')')[0].split(', ')
+            y_coordinates_list.append((int(text_position[2]), int(text_position[3])))
             line = f.readline()
         f.close()
         return Counter(y_coordinates_list).most_common(1)
@@ -757,10 +699,8 @@ class SubtitleExtractor:
             milliseconds = cap.get(cv2.CAP_PROP_POS_MSEC)
             if milliseconds <= 0:
                 return '{0:02d}:{1:02d}:{2:02d},{3:03d}'.format(int(frame_no / (3600 * self.fps)),
-                                                                int(frame_no /
-                                                                    (60 * self.fps) % 60),
-                                                                int(frame_no /
-                                                                    self.fps % 60),
+                                                                int(frame_no / (60 * self.fps) % 60),
+                                                                int(frame_no / self.fps % 60),
                                                                 int(frame_no % self.fps))
             seconds = milliseconds // 1000
             milliseconds = int(milliseconds % 1000)
@@ -777,10 +717,8 @@ class SubtitleExtractor:
             return "%02d:%02d:%02d%s%03d" % (hours, minutes, seconds, smpte_token, milliseconds)
         else:
             return '{0:02d}:{1:02d}:{2:02d},{3:03d}'.format(int(frame_no / (3600 * self.fps)),
-                                                            int(frame_no /
-                                                                (60 * self.fps) % 60),
-                                                            int(frame_no /
-                                                                self.fps % 60),
+                                                            int(frame_no / (60 * self.fps) % 60),
+                                                            int(frame_no / self.fps % 60),
                                                             int(frame_no % self.fps))
 
     def _timestamp_to_frameno(self, time_ms):
@@ -823,14 +761,11 @@ class SubtitleExtractor:
                             end_frame = content_list[idx_j + 1][0]
                     # 寻找最长字幕
                     similar_list = content_list[idx_i:idx_j + 1]
-                    similar_content_strip_list = [
-                        item.content.replace(' ', '') for item in similar_list]
-                    index, _ = max(
-                        enumerate(similar_content_strip_list), key=lambda x: len(x[1]))
+                    similar_content_strip_list = [item.content.replace(' ', '') for item in similar_list]
+                    index, _ = max(enumerate(similar_content_strip_list), key=lambda x: len(x[1]))
 
                     # 添加进列表
-                    unique_subtitle_list.append(
-                        (start_frame, end_frame, similar_list[index].content))
+                    unique_subtitle_list.append((start_frame, end_frame, similar_list[index].content))
                     idx_i = idx_j + 1
                     break
                 else:
@@ -854,14 +789,12 @@ class SubtitleExtractor:
             content_list.append([frame_no, coordinate, content])
 
         # 找出那些不止一行的帧号
-        frame_no_list = [i[0] for i in Counter(
-            frame_no_list).most_common() if i[1] > 1]
+        frame_no_list = [i[0] for i in Counter(frame_no_list).most_common() if i[1] > 1]
 
         # 找出这些帧号出现的位置
         concatenation_list = []
         for frame_no in frame_no_list:
-            position = [i for i, x in enumerate(
-                content_list) if x[0] == frame_no]
+            position = [i for i, x in enumerate(content_list) if x[0] == frame_no]
             concatenation_list.append((frame_no, position))
 
         for i in concatenation_list:
@@ -958,16 +891,14 @@ class SubtitleExtractor:
         else:
             dt_box, rec_res = self.ocr.predict(img1)
             area_text1 = "".join(self.__get_area_text((dt_box, rec_res)))
-            result_cache[img1_no] = {'text': area_text1,
-                                     'dt_box': dt_box, 'rec_res': rec_res}
+            result_cache[img1_no] = {'text': area_text1, 'dt_box': dt_box, 'rec_res': rec_res}
 
         if img2_no in result_cache:
             area_text2 = result_cache[img2_no]['text']
         else:
             dt_box, rec_res = self.ocr.predict(img2)
             area_text2 = "".join(self.__get_area_text((dt_box, rec_res)))
-            result_cache[img2_no] = {'text': area_text2,
-                                     'dt_box': dt_box, 'rec_res': rec_res}
+            result_cache[img2_no] = {'text': area_text2, 'dt_box': dt_box, 'rec_res': rec_res}
         delete_no_list = []
         for no in result_cache:
             if no < min(img1_no, img2_no) - 10:
@@ -1026,8 +957,7 @@ class SubtitleExtractor:
             self.progress_ocr = ocr
         if frame_extract is not None:
             self.progress_frame_extract = frame_extract
-        self.progress_total = (
-            self.progress_frame_extract + self.progress_ocr) / 2
+        self.progress_total = (self.progress_frame_extract + self.progress_ocr) / 2
 
     def start_subtitle_ocr_async(self):
         def get_ocr_progress():
@@ -1039,8 +969,7 @@ class SubtitleExtractor:
             # 是否打印提示开始查找字幕的信息
             notify = True
             while True:
-                current_frame_no = self.subtitle_ocr_progress_queue.get(
-                    block=True)
+                current_frame_no = self.subtitle_ocr_progress_queue.get(block=True)
                 if notify:
                     print(config.interface_config['Main']['StartFindSub'])
                     notify = False
@@ -1068,8 +997,7 @@ class SubtitleExtractor:
     @staticmethod
     def srt2txt(srt_file):
         subs = pysrt.open(srt_file, encoding='utf-8')
-        output_path = os.path.join(os.path.dirname(
-            srt_file), Path(srt_file).stem + '.txt')
+        output_path = os.path.join(os.path.dirname(srt_file), Path(srt_file).stem + '.txt')
         print(output_path)
         with open(output_path, 'w') as f:
             for sub in subs:
