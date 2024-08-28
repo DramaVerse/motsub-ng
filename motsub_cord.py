@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHB
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen
 from PyQt5.QtCore import Qt, QTimer, QRect
 
-MAX_WINDOW_HEIGHT = 1000
+MAX_WINDOW_HEIGHT = 600
 CONTROLS_HEIGHT = 100  # Estimated height for slider and buttons
 
 class VideoPlayer(QMainWindow):
