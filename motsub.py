@@ -58,6 +58,15 @@ def extract_audio(video_path):
     return audio_path
 
 
+# Import the new motsub_gpt module
+motsub_gpt_path = os.path.join(os.path.dirname(
+    current_script_path), 'motsub_gpt.py')
+spec = importlib.util.spec_from_file_location("motsub_gpt", motsub_gpt_path)
+motsub_gpt = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(motsub_gpt)
+compare_and_translate_subtitles = motsub_gpt.compare_and_translate_subtitles
+
+
 def process_video(video_path, coordinates):
     print(f"你标记的坐标是：{coordinates}")
 
@@ -81,23 +90,34 @@ def process_video(video_path, coordinates):
         print(f"OCR识别过程中发生错误: {str(e)}")
         ocr_srt_file = None
 
+    print("正在比对STT和OCR结果...")
+    print("正在生成最终字幕文件...")
+    try:
+        chinese_srt, arabic_srt = compare_and_translate_subtitles(
+            stt_srt_file, ocr_srt_file)
+        print(f"比对完成，生成最终中文字幕文件：{chinese_srt}")
+        print(f"翻译完成，生成阿拉伯语字幕文件：{arabic_srt}")
+    except Exception as e:
+        print(f"比对和翻译过程中发生错误: {str(e)}")
+        chinese_srt, arabic_srt = None, None
+
     print("所有处理步骤完成。")
     print(f"STT字幕文件：{stt_srt_file}")
     if ocr_srt_file:
         print(f"OCR字幕文件：{ocr_srt_file}")
+    if chinese_srt:
+        print(f"最终中文字幕文件：{chinese_srt}")
+    if arabic_srt:
+        print(f"阿拉伯语字幕文件：{arabic_srt}")
 
     # 模拟后续处理步骤
     steps = [
-        "正在比对STT和OCR结果",
-        "正在生成最终字幕文件",
-        "正在生成阿拉伯语字幕",
         "正在嵌入字幕到视频"
     ]
 
     for step in steps:
         time.sleep(1)
         print(step + "...完成")
-
 
 def main():
     video_path = get_video_path()
