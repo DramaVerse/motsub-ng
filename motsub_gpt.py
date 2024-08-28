@@ -87,6 +87,5 @@ OCR字幕内容：
         return chinese_srt_path, arabic_srt_path
 
     except Exception as e:
-        logger.error(f"Error in subtitle comparison and translation process: {
-                     str(e)}", exc_info=True)
+        logger.error(f"Error in subtitle comparison and translation process: {str(e)}", exc_info=True)
         return None, None
