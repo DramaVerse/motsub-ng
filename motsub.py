@@ -3,6 +3,7 @@ import time
 import sys
 import importlib.util
 import subprocess
+import shutil
 from datetime import datetime
 import logging
 from typing import Tuple, Optional
@@ -53,10 +54,7 @@ def get_video_path():
 
 def extract_audio(video_path):
     logger.info("Starting audio extraction")
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    temp_dir = os.path.join(script_dir, 'temp')
-    os.makedirs(temp_dir, exist_ok=True)
-
+    temp_dir = os.path.dirname(video_path)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     audio_filename = f"{timestamp}_audio.mp3"
     audio_path = os.path.join(temp_dir, audio_filename)
@@ -90,47 +88,18 @@ def process_subtitles(stt_srt_file: str, ocr_srt_file: str) -> Tuple[Optional[st
 
 def embed_arabic_subtitle(video_path: str, subtitle_path: str, output_path: str):
     logger.info(f"Embedding Arabic subtitle from {subtitle_path} into {video_path}")
-    
-    font_style = r"Fontname=Amiri,Fontsize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2"
-    
-    # 转义字幕文件路径中的反斜杠
-    subtitle_path_escaped = subtitle_path.replace('\\', '\\\\')
+
+    # Correctly format the subtitle path for ffmpeg
+    subtitle_path = subtitle_path.replace("\\", "/")
+
+    font_style = "Fontname=Amiri,Fontsize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2"
     
     command = [
         'ffmpeg',
         '-i', f'"{video_path}"',
-        '-vf', f"subtitles='{subtitle_path_escaped}':force_style='{font_style}'",
+        '-vf', f"subtitles='{subtitle_path}':force_style='{font_style}'",
         '-c:a', 'copy',
         f'"{output_path}"'
-    ]
-    
-    command_str = ' '.join(command)
-    logger.info(f"Running ffmpeg command: {command_str}")
-    
-    try:
-        result = subprocess.run(command_str, shell=True, check=True, capture_output=True, text=True)
-        logger.info(f"Arabic subtitle embedding completed: {output_path}")
-        logger.debug(f"ffmpeg stdout: {result.stdout}")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error embedding Arabic subtitle: {e}")
-        logger.error(f"ffmpeg command: {command_str}")
-        logger.error(f"ffmpeg stdout: {e.stdout}")
-        logger.error(f"ffmpeg stderr: {e.stderr}")
-        raise    logger.info(f"Embedding Arabic subtitle from {subtitle_path} into {video_path}")
-    
-    font_style = r"Fontname=Amiri,Fontsize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2"
-    
-    # 转义文件路径中的反斜杠
-    video_path_escaped = video_path.replace('\\', '\\\\')
-    subtitle_path_escaped = subtitle_path.replace('\\', '\\\\')
-    output_path_escaped = output_path.replace('\\', '\\\\')
-    
-    command = [
-        'ffmpeg',
-        '-i', f'"{video_path_escaped}"',
-        '-vf', f"subtitles='{subtitle_path_escaped}':force_style='{font_style}'",
-        '-c:a', 'copy',
-        f'"{output_path_escaped}"'
     ]
     
     command_str = ' '.join(command)
@@ -151,9 +120,19 @@ def process_video(video_path, coordinates):
     logger.info(f"Processing video: {video_path}")
     logger.info(f"Subtitle coordinates: {coordinates}")
 
+    # 创建临时文件夹
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    temp_dir = os.path.join(script_dir, 'temp')
+    os.makedirs(temp_dir, exist_ok=True)
+
+    # 复制源视频到临时文件夹
+    temp_video_path = os.path.join(temp_dir, os.path.basename(video_path))
+    shutil.copy2(video_path, temp_video_path)
+    logger.info(f"Copied source video to: {temp_video_path}")
+
     logger.info("Extracting audio...")
     try:
-        audio_path = extract_audio(video_path)
+        audio_path = extract_audio(temp_video_path)
         logger.info(f"Audio extraction complete: {audio_path}")
     except Exception as e:
         logger.error(f"Error in audio extraction: {str(e)}", exc_info=True)
@@ -176,7 +155,7 @@ def process_video(video_path, coordinates):
         else:
             ocr_coordinates = None
         
-        ocr_srt_file = extract_subtitle(video_path, ocr_coordinates)
+        ocr_srt_file = extract_subtitle(temp_video_path, ocr_coordinates)
         if isinstance(ocr_srt_file, tuple):
             ocr_srt_file = ocr_srt_file[0]  # Extract the file path from the tuple
         logger.info(f"OCR complete. Subtitle file generated: {ocr_srt_file}")
@@ -203,9 +182,9 @@ def process_video(video_path, coordinates):
 
     # Embed Arabic subtitle into video
     if arabic_srt:
-        output_path = os.path.splitext(video_path)[0] + "_arabic.mp4"
+        output_path = os.path.join(temp_dir, os.path.splitext(os.path.basename(video_path))[0] + "_arabic.mp4")
         try:
-            embed_arabic_subtitle(video_path, arabic_srt, output_path)
+            embed_arabic_subtitle(temp_video_path, arabic_srt, output_path)
             logger.info(f"Arabic subtitle embedded. Output video: {output_path}")
         except Exception as e:
             logger.error(f"Error embedding Arabic subtitle: {str(e)}", exc_info=True)
@@ -220,6 +199,16 @@ def main():
         # 确保坐标顺序为：xmin, ymin, xmax, ymax
         coordinates = tuple(map(int, coordinates.split()))
         process_video(video_path, coordinates)
+        
+        # 复制最终视频到原始位置
+        temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'temp')
+        final_video = os.path.join(temp_dir, os.path.splitext(os.path.basename(video_path))[0] + "_arabic.mp4")
+        if os.path.exists(final_video):
+            final_output = os.path.join(os.path.dirname(video_path), os.path.basename(final_video))
+            shutil.copy2(final_video, final_output)
+            logger.info(f"Final video copied to: {final_output}")
+        else:
+            logger.warning("Final video not found in temp directory.")
     else:
         logger.info("No subtitle region selected. Automatic detection will be used.")
         process_video(video_path, None)
