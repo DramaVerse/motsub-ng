@@ -91,23 +91,58 @@ def process_subtitles(stt_srt_file: str, ocr_srt_file: str) -> Tuple[Optional[st
 def embed_arabic_subtitle(video_path: str, subtitle_path: str, output_path: str):
     logger.info(f"Embedding Arabic subtitle from {subtitle_path} into {video_path}")
     
-    font_style = 'Fontname=Amiri,Fontsize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H000000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2'
+    font_style = r"Fontname=Amiri,Fontsize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2"
+    
+    # 转义字幕文件路径中的反斜杠
+    subtitle_path_escaped = subtitle_path.replace('\\', '\\\\')
     
     command = [
         'ffmpeg',
-        '-i', video_path,
-        '-vf', f"subtitles='{subtitle_path}':force_style='{font_style}'",
+        '-i', f'"{video_path}"',
+        '-vf', f"subtitles='{subtitle_path_escaped}':force_style='{font_style}'",
         '-c:a', 'copy',
-        output_path
+        f'"{output_path}"'
     ]
     
-    logger.info(f"Running ffmpeg command: {' '.join(command)}")
+    command_str = ' '.join(command)
+    logger.info(f"Running ffmpeg command: {command_str}")
+    
     try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        result = subprocess.run(command_str, shell=True, check=True, capture_output=True, text=True)
         logger.info(f"Arabic subtitle embedding completed: {output_path}")
         logger.debug(f"ffmpeg stdout: {result.stdout}")
     except subprocess.CalledProcessError as e:
         logger.error(f"Error embedding Arabic subtitle: {e}")
+        logger.error(f"ffmpeg command: {command_str}")
+        logger.error(f"ffmpeg stdout: {e.stdout}")
+        logger.error(f"ffmpeg stderr: {e.stderr}")
+        raise    logger.info(f"Embedding Arabic subtitle from {subtitle_path} into {video_path}")
+    
+    font_style = r"Fontname=Amiri,Fontsize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2"
+    
+    # 转义文件路径中的反斜杠
+    video_path_escaped = video_path.replace('\\', '\\\\')
+    subtitle_path_escaped = subtitle_path.replace('\\', '\\\\')
+    output_path_escaped = output_path.replace('\\', '\\\\')
+    
+    command = [
+        'ffmpeg',
+        '-i', f'"{video_path_escaped}"',
+        '-vf', f"subtitles='{subtitle_path_escaped}':force_style='{font_style}'",
+        '-c:a', 'copy',
+        f'"{output_path_escaped}"'
+    ]
+    
+    command_str = ' '.join(command)
+    logger.info(f"Running ffmpeg command: {command_str}")
+    
+    try:
+        result = subprocess.run(command_str, shell=True, check=True, capture_output=True, text=True)
+        logger.info(f"Arabic subtitle embedding completed: {output_path}")
+        logger.debug(f"ffmpeg stdout: {result.stdout}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error embedding Arabic subtitle: {e}")
+        logger.error(f"ffmpeg command: {command_str}")
         logger.error(f"ffmpeg stdout: {e.stdout}")
         logger.error(f"ffmpeg stderr: {e.stderr}")
         raise
