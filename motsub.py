@@ -96,7 +96,7 @@ def embed_arabic_subtitle(video_path: str, subtitle_path: str, output_path: str)
     command = [
         'ffmpeg',
         '-i', video_path,
-        '-vf', f"subtitles={subtitle_path}:force_style='{font_style}'",
+        '-vf', f"subtitles='{subtitle_path}':force_style='{font_style}'",
         '-c:a', 'copy',
         output_path
     ]
@@ -173,61 +173,6 @@ def process_video(video_path, coordinates):
             embed_arabic_subtitle(video_path, arabic_srt, output_path)
             logger.info(f"Arabic subtitle embedded. Output video: {output_path}")
         except Exception as e:
-            logger.error(f"Error embedding Arabic subtitle: {str(e)}", exc_info=True)    
-    
-    logger.info(f"Processing video: {video_path}")
-    logger.info(f"Subtitle coordinates: {coordinates}")
-
-    logger.info("Extracting audio...")
-    try:
-        audio_path = extract_audio(video_path)
-        logger.info(f"Audio extraction complete: {audio_path}")
-    except Exception as e:
-        logger.error(f"Error in audio extraction: {str(e)}", exc_info=True)
-        return
-
-    logger.info("Performing speech-to-text...")
-    try:
-        stt_srt_file = process_audio_to_srt(audio_path)
-        logger.info(f"Speech-to-text complete. Subtitle file generated: {stt_srt_file}")
-    except Exception as e:
-        logger.error(f"Error in speech-to-text process: {str(e)}", exc_info=True)
-        return
-
-    logger.info("Performing OCR...")
-    try:
-        ocr_srt_file = extract_subtitle(video_path, coordinates)
-        if isinstance(ocr_srt_file, tuple):
-            ocr_srt_file = ocr_srt_file[0]  # Extract the file path from the tuple
-        logger.info(f"OCR complete. Subtitle file generated: {ocr_srt_file}")
-    except Exception as e:
-        logger.error(f"Error in OCR process: {str(e)}", exc_info=True)
-        logger.warning("OCR failed. Continuing with STT subtitles only.")
-        ocr_srt_file = None
-
-    logger.info("Processing and translating subtitles...")
-    try:
-        chinese_srt, arabic_srt = process_subtitles(stt_srt_file, ocr_srt_file)
-    except Exception as e:
-        logger.error(f"Error in subtitle processing and translation: {str(e)}", exc_info=True)
-        return
-
-    logger.info("All processing steps completed.")
-    logger.info(f"STT subtitle file: {stt_srt_file}")
-    if ocr_srt_file:
-        logger.info(f"OCR subtitle file: {ocr_srt_file}")
-    if chinese_srt:
-        logger.info(f"Final Chinese subtitle file: {chinese_srt}")
-    if arabic_srt:
-        logger.info(f"Arabic subtitle file: {arabic_srt}")
-
-    # Embed Arabic subtitle into video
-    if arabic_srt:
-        output_path = os.path.splitext(video_path)[0] + "_arabic.mp4"
-        try:
-            embed_arabic_subtitle(video_path, arabic_srt, output_path)
-            logger.info(f"Arabic subtitle embedded. Output video: {output_path}")
-        except Exception as e:
             logger.error(f"Error embedding Arabic subtitle: {str(e)}", exc_info=True)
 
 def main():
@@ -237,6 +182,7 @@ def main():
     coordinates = get_subtitle_coordinates(video_path)
 
     if coordinates:
+        # 确保坐标顺序为：xmin, ymin, xmax, ymax
         coordinates = tuple(map(int, coordinates.split()))
         process_video(video_path, coordinates)
     else:
