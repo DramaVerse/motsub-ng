@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Hardcoded API key (not recommended for production use)
-ANTHROPIC_API_KEY = "hi"
+ANTHROPIC_API_KEY = "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"
 
 def test_api_key():
     url = "https://api.anthropic.com/v1/messages"

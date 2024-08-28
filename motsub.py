@@ -89,13 +89,15 @@ def process_subtitles(stt_srt_file: str, ocr_srt_file: str) -> Tuple[Optional[st
 def embed_arabic_subtitle(video_path: str, subtitle_path: str, output_path: str):
     logger.info(f"Embedding Arabic subtitle from {subtitle_path} into {video_path}")
 
-    # Correctly format the paths for ffmpeg
-    subtitle_path = subtitle_path.replace("\\", "\\\\")
-    video_path = video_path.replace("\\", "/")
-    output_path = output_path.replace("\\", "/")
+    # Format paths for ffmpeg
+    subtitle_path = subtitle_path.replace("\\", "\\\\")  # 双反斜杠转义
+    video_path = video_path.replace("\\", "/")  # 用正斜杠代替反斜杠
+    output_path = output_path.replace("\\", "/")  # 用正斜杠代替反斜杠
 
+    # 字体样式设置
     font_style = "Fontname=Amiri,Fontsize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2"
-    
+
+    # 构建命令
     command = [
         'ffmpeg', '-y',
         '-i', f'"{video_path}"',
@@ -103,10 +105,10 @@ def embed_arabic_subtitle(video_path: str, subtitle_path: str, output_path: str)
         '-c:a', 'copy',
         f'"{output_path}"'
     ]
-    
+
     command_str = ' '.join(command)
     logger.info(f"Running ffmpeg command: {command_str}")
-    
+
     try:
         result = subprocess.run(command_str, shell=True, check=True, capture_output=True, text=True)
         logger.info(f"Arabic subtitle embedding completed: {output_path}")
