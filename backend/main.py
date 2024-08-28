@@ -441,6 +441,7 @@ class SubtitleExtractor:
             # 计算进度
             Thread(target=count_process, daemon=True).start()
             import subprocess
+            print(cmd)
             subprocess.run(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.vsf_running = False
         else:
@@ -451,6 +452,7 @@ class SubtitleExtractor:
             cmd += f"-te {top_end} -be {bottom_end} -le {left_end} -re {right_end} -nthr {cpu_count} -dsi"
             self.vsf_running = True
             import subprocess
+            print(cmd)
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1,
                                  close_fds='posix' in sys.builtin_module_names, shell=True)
             Thread(target=vsf_output, daemon=True, args=(p.stderr,)).start()

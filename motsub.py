@@ -106,9 +106,11 @@ def process_video(video_path, coordinates):
     audio_path = extract_audio(video_path)
     logger.info(f"Audio extraction complete: {audio_path}")
 
+    xmin, ymin, xmax, ymax = coordinates if coordinates else (0, 0, 0, 0)
+
     logger.info("Performing OCR...")
     try:
-        ocr_srt_file = extract_subtitle(video_path, coordinates)
+        ocr_srt_file = extract_subtitle(video_path, (xmin, xmax, ymin, ymax))
         if isinstance(ocr_srt_file, tuple):
             # Extract the file path from the tuple
             ocr_srt_file = ocr_srt_file[0]
