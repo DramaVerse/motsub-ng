@@ -106,16 +106,6 @@ def process_video(video_path, coordinates):
     audio_path = extract_audio(video_path)
     logger.info(f"Audio extraction complete: {audio_path}")
 
-    logger.info("Performing speech-to-text...")
-    try:
-        stt_srt_file = process_audio_to_srt(audio_path)
-        logger.info(
-            f"Speech-to-text complete. Subtitle file generated: {stt_srt_file}")
-    except Exception as e:
-        logger.error(
-            f"Error in speech-to-text process: {str(e)}", exc_info=True)
-        return
-
     logger.info("Performing OCR...")
     try:
         ocr_srt_file = extract_subtitle(video_path, coordinates)
@@ -126,6 +116,16 @@ def process_video(video_path, coordinates):
     except Exception as e:
         logger.error(f"Error in OCR process: {str(e)}", exc_info=True)
         ocr_srt_file = None
+
+    logger.info("Performing speech-to-text...")
+    try:
+        stt_srt_file = process_audio_to_srt(audio_path)
+        logger.info(
+            f"Speech-to-text complete. Subtitle file generated: {stt_srt_file}")
+    except Exception as e:
+        logger.error(
+            f"Error in speech-to-text process: {str(e)}", exc_info=True)
+        return
 
     chinese_srt, arabic_srt = process_subtitles(stt_srt_file, ocr_srt_file)
 
