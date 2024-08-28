@@ -89,15 +89,17 @@ def process_subtitles(stt_srt_file: str, ocr_srt_file: str) -> Tuple[Optional[st
 def embed_arabic_subtitle(video_path: str, subtitle_path: str, output_path: str):
     logger.info(f"Embedding Arabic subtitle from {subtitle_path} into {video_path}")
 
-    # Correctly format the subtitle path for ffmpeg
-    subtitle_path = subtitle_path.replace("\\", "/")
+    # Correctly format the paths for ffmpeg
+    subtitle_path = subtitle_path.replace("\\", "\\\\")
+    video_path = video_path.replace("\\", "/")
+    output_path = output_path.replace("\\", "/")
 
     font_style = "Fontname=Amiri,Fontsize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2"
     
     command = [
-        'ffmpeg',
+        'ffmpeg', '-y',
         '-i', f'"{video_path}"',
-        '-vf', f"subtitles='{subtitle_path}':force_style='{font_style}'",
+        '-vf', f'"subtitles=\'{subtitle_path}\':force_style={font_style}"',
         '-c:a', 'copy',
         f'"{output_path}"'
     ]
