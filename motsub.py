@@ -88,30 +88,33 @@ def process_subtitles(stt_srt_file: str, ocr_srt_file: str) -> Tuple[Optional[st
 
 def embed_arabic_subtitle(video_path: str, subtitle_path: str, output_path: str):
     logger.info(f"Embedding Arabic subtitle from {subtitle_path} into {video_path}")
+    logger.info(f"i gave up")
+    pass
 
-    # Format paths for ffmpeg
-    subtitle_path = subtitle_path.replace("\\", "\\\\")  # 双反斜杠转义
-    video_path = video_path.replace("\\", "/")  # 用正斜杠代替反斜杠
-    output_path = output_path.replace("\\", "/")  # 用正斜杠代替反斜杠
+    # Paths in temp/ directory
+    video_file = os.path.basename(video_path)
+    subtitle_file = os.path.basename(subtitle_path)
+    output_file = os.path.basename(output_path)
 
     # 字体样式设置
     font_style = "Fontname=Amiri,Fontsize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2"
 
     # 构建命令
     command = [
-        'ffmpeg', '-y',
-        '-i', f'"{video_path}"',
-        '-vf', f'"subtitles=\'{subtitle_path}\':force_style={font_style}"',
+        'ffmpeg',
+        '-y',  # 强制覆盖现有文件
+        '-i', video_file,
+        '-vf', f"subtitles={subtitle_file}:force_style={font_style}",
         '-c:a', 'copy',
-        f'"{output_path}"'
+        output_file
     ]
 
     command_str = ' '.join(command)
     logger.info(f"Running ffmpeg command: {command_str}")
 
     try:
-        result = subprocess.run(command_str, shell=True, check=True, capture_output=True, text=True)
-        logger.info(f"Arabic subtitle embedding completed: {output_path}")
+        result = subprocess.run(command_str, shell=True, check=True, capture_output=True, text=True, cwd=os.path.dirname(video_path))
+        logger.info(f"Arabic subtitle embedding completed: {output_file}")
         logger.debug(f"ffmpeg stdout: {result.stdout}")
     except subprocess.CalledProcessError as e:
         logger.error(f"Error embedding Arabic subtitle: {e}")
@@ -129,7 +132,7 @@ def process_video(video_path, coordinates):
     temp_dir = os.path.join(script_dir, 'temp')
     os.makedirs(temp_dir, exist_ok=True)
 
-    # 复制源视频到临时文件夹
+    # 使用 temp/ 目录下的相对路径
     temp_video_path = os.path.join(temp_dir, os.path.basename(video_path))
     shutil.copy2(video_path, temp_video_path)
     logger.info(f"Copied source video to: {temp_video_path}")
@@ -154,7 +157,6 @@ def process_video(video_path, coordinates):
     try:
         if coordinates:
             xmin, ymin, xmax, ymax = coordinates
-            # 确保坐标顺序正确：ymin, ymax, xmin, xmax
             ocr_coordinates = (ymin, ymax, xmin, xmax)
         else:
             ocr_coordinates = None
@@ -200,11 +202,9 @@ def main():
     coordinates = get_subtitle_coordinates(video_path)
 
     if coordinates:
-        # 确保坐标顺序为：xmin, ymin, xmax, ymax
         coordinates = tuple(map(int, coordinates.split()))
         process_video(video_path, coordinates)
         
-        # 复制最终视频到原始位置
         temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'temp')
         final_video = os.path.join(temp_dir, os.path.splitext(os.path.basename(video_path))[0] + "_arabic.mp4")
         if os.path.exists(final_video):
